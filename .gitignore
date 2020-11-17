@@ -32,3 +32,5 @@
 *.app
 
 *Credentials.h
+
+videos/*
