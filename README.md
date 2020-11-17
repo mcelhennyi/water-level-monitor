@@ -10,8 +10,8 @@ My parents live outside of the city and have a well that they use to collect wat
 ## Hardware
 The hardware used for this project consist of two category:   
 
-1) The measurement device and
-
+1) The measurement device  
+and  
 2) The User interface device.  
   
 In addition to the below listed hardware, there will be a misc amount of 3D printed components and screw/nuts/bolts for mounting.
