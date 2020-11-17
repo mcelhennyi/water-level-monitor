@@ -39,6 +39,10 @@ In addition to the below hardware, a custom 3D printed enclosure will be created
 - [1 x ESP32 + LoRa/WiFi/Bluetooth + OLED](https://www.amazon.com/gp/product/B07HJ49VN8/ref=ppx_yo_dt_b_asin_title_o02_s06?ie=UTF8&psc=1)  
 - [1 x micro usb power supply](https://www.amazon.com/gp/product/B071KWFZ9Z/ref=ppx_yo_dt_b_asin_title_o02_s06?ie=UTF8&psc=1)  
 
+
+## Current Status
+10-16-2020 - The user interface is mosty roughed out for displaying values, inputting changes, and navigating around to different pages.
+
 ## Similar Projects
 These projects were either referenced, and/or used in the creation of this repo.
 
