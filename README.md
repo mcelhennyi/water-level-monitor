@@ -1,3 +1,5 @@
+![](https://github.com/mcelhennyi/water-level-monitor/blob/main/logo.png)
+
 # Water Level  Monitor
 This project specifies the hardware and software necessary to monitor the water level within a tank of water.
 
