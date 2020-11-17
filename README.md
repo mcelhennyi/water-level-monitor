@@ -40,4 +40,6 @@ In addition to the below hardware, a custom 3D printed enclosure will be created
 [1 x micro usb power supply](https://www.amazon.com/gp/product/B071KWFZ9Z/ref=ppx_yo_dt_b_asin_title_o02_s06?ie=UTF8&psc=1)  
 
 ## Similar Projects
+These projects were either referenced, and/or used in the creation of this repo.
+
 [Water Level Meter](https://github.com/grillbaer/esp32-lora-water-level-meter)
