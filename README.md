@@ -10,6 +10,9 @@ This part of the measurement device logic will essentially turn the relay on or 
 ### Water Level Indication
 This part of the logic the device will both send a signal to the user interface device with the current water level AND will light up a three tiered light for empty, half and full. When the tank water is raising, and the device is not in control (i.e. someone is filling the tank externally and the pump isnt the source of the added water) the device will set off a buzzer if the water level continues to rise after it signals with a green light that it is full of water. 
 
+### User Interface
+This part is also split into two parts: The on device display AND the webpage hosted on the device.  The display will show two simple things: The level of the water AND the status of the pump (on/off). In addition to the on device display the device will join the houses wifi, and will host a server that is available to connect to from a users  phone so they can see (from anywhere within range of the home wifi) the level of the water and the status of the pump.
+
 ## Hardware
 The hardware used for this project consist of two category:   
 
