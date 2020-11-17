@@ -21,5 +21,5 @@ In addition to the below listed hardware, there will be a misc amount of 3D prin
 [1 x 3 position tower light with buzzer](https://www.amazon.com/gp/product/B0871ZTZ6S/ref=ppx_yo_dt_b_asin_title_o01_s00?ie=UTF8&psc=1)  
 
 ### Water Level Indication
-[1 x ESP32 + LoRa/WiFi/Bluetooth + OLED] (https://www.amazon.com/gp/product/B07HJ49VN8/ref=ppx_yo_dt_b_asin_title_o02_s06?ie=UTF8&psc=1)  
+[1 x ESP32 + LoRa/WiFi/Bluetooth + OLED](https://www.amazon.com/gp/product/B07HJ49VN8/ref=ppx_yo_dt_b_asin_title_o02_s06?ie=UTF8&psc=1)  
 [1 x micro usb power supply](https://www.amazon.com/gp/product/B071KWFZ9Z/ref=ppx_yo_dt_b_asin_title_o02_s06?ie=UTF8&psc=1)  
