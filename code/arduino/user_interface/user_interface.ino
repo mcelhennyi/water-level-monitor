@@ -55,7 +55,7 @@ void heltecLoop();
 void logo()
 {
   Heltec.display->clear();
-  Heltec.display->drawXbm(0,5,logo_width,logo_height,logo_bits);
+  Heltec.display->drawXbm(0,-30,logo_width,logo_height,logo_bits);
   Heltec.display->display();
 }
 
@@ -117,14 +117,8 @@ void setup()
    
     Heltec.display->init();
     Heltec.display->flipScreenVertically();  
-    Heltec.display->setFont(ArialMT_Plain_10);
     logo();
-    delay(1500);
-    Heltec.display->clear();
-    
-    Heltec.display->drawString(0, 0, "Heltec.LoRa Initial success!");
-    Heltec.display->display();
-    delay(1000);
+    delay(5000);
     // LORA SETUP
 
     // Deep sleep setup
