@@ -146,7 +146,7 @@ void heltecLoop()
     Heltec.display->setFont(ArialMT_Plain_10);
 
     // First line
-    Heltec.display->drawString(0, 0, "         Water Level: " + String(rxData.waterLevelFt) + String(" ft"));
+    Heltec.display->drawString(0, 0, "     Water Level: " + String(rxData.waterLevelFt) + String(" ft"));
 
     // Second line
     Heltec.display->drawString(0, LINE_HEIGHT, "Pump: " + String(rxData.pumpOn ? "On": "Off"));
@@ -194,7 +194,7 @@ void heltecLoop()
 
     // ------ Receive -------
     int packetSize = LoRa.parsePacket();
-    if (packetSize) 
+    while(packetSize != 0)
     {
         // received a packet      
         char buf[1024];
@@ -204,15 +204,19 @@ void heltecLoop()
             buf[index++] = (char)LoRa.read();
         }
 
-        // Save off RX data
-        Serial.println("Got RX packet before: " + String(*((float*) &rxData)));
-        if(index == sizeof(RXData))
+        // Save data
+        if(index == sizeof(ConfigData))
         {
-            Serial.println("Got RX packet buf: " + String(*((float*) &buf)));
-            Serial.println("Got RX packet rxData: " + String(*((float*) &rxData)));
-
+            Serial.println("Config data received");
+            memcpy(&configData, &buf, sizeof(ConfigData));
+        }
+        
+        else if(index == sizeof(RXData))
+        {
+            Serial.println("RX data received");
             memcpy(&rxData, &buf, sizeof(RXData));
         }
+
         else
         {
             Serial.println("Unknown packet with length: " + String(index));
@@ -221,7 +225,11 @@ void heltecLoop()
         // print RSSI of packet
         Serial.print("RSSI ");
         Serial.println(LoRa.packetRssi());
-    }
+          
+        delay(10);
+        packetSize = LoRa.parsePacket();
+    } 
+
     // ------ Receive -------
 }
 
