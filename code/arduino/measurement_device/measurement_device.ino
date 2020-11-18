@@ -31,7 +31,15 @@ void setup()
 void loop() 
 {
 
+    // TESTER CODE
     rxData.waterLevelFt += 1;
+    rxData.pumpOn = !rxData.pumpOn;
+    rxData.buzzerOn = !rxData.buzzerOn;
+    rxData.lightColor += 1;
+    if(rxData.lightColor == 4)
+      rxData.lightColor = 0;
+    // TESTER CODE
+
     LoRa.beginPacket();
     /*
      * LoRa.setTxPower(txPower,RFOUT_pin);
