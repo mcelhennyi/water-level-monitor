@@ -1,12 +1,14 @@
 #ifdef ARDUINO_ARCH_ESP32
-#include <WiFi.h>
-#include <AsyncTCP.h>
+  #include <AsyncTCP.h>
 #else
-#include <ESP8266WiFi.h>
-#include <ESPAsyncTCP.h>
+  #include <ESP8266WiFi.h>
+  #include <ESPAsyncTCP.h>
 #endif
 #include <ESPAsyncWebServer.h>
 #include "Credentials.h"
+
+#include "heltec.h"
+#include "images.h"
 
 // prototypes
 boolean connectWifi();
@@ -16,12 +18,37 @@ String getSetupPage();
 // Globals
 boolean wifiConnected = false;
 AsyncWebServer server(80);
-float waterLevelFt = -9999;
-boolean pumpOn = false;
 
-// Configuration params
-float minLevel = -9999;
-float maxLevel = 9999;
+// RX-ed vars
+float   waterLevelFt = -99;
+boolean pumpOn = false;
+boolean buzzerOn = false;
+byte    lightColor = 0; // 0 - unknown, 1 - green, 2 - yellow, 3 - red
+
+// TX-ed vars
+// TX-ed :: Configuration params
+float minLevel = 2;
+float maxLevel = 3.5;
+float mountHeight = 5;
+float tankDepth = 4;
+
+// TX Details
+#define BAND    868E6  //you can set band here directly,e.g. 868E6,915E6
+
+
+// Display Vars
+const int LINE_HEIGHT = 10;
+
+// Heltec
+void heltecLoop();
+
+
+void logo()
+{
+  Heltec.display->clear();
+  Heltec.display->drawXbm(0,5,logo_width,logo_height,logo_bits);
+  Heltec.display->display();
+}
 
 
 void setup() 
@@ -68,14 +95,85 @@ void setup()
         delay(2500);
       }
     }
+
+    // LORA SETUP
+    //WIFI Kit series V1 not support Vext control
+    Heltec.begin(
+      true /*DisplayEnable Enable*/, 
+      true /*Heltec.Heltec.Heltec.LoRa Disable*/, 
+      true /*Serial Enable*/, 
+      true /*PABOOST Enable*/, 
+      BAND /*long BAND*/
+    );
+   
+    Heltec.display->init();
+    Heltec.display->flipScreenVertically();  
+    Heltec.display->setFont(ArialMT_Plain_10);
+    logo();
+    delay(1500);
+    Heltec.display->clear();
     
-    delay(5000);
-    //Serial.println(getSetupPage());
-}
+    Heltec.display->drawString(0, 0, "Heltec.LoRa Initial success!");
+    Heltec.display->display();
+    delay(1000);
+    // LORA SETUP
+
+    
+    
+} // End setup
 
 void loop() 
 {
+    // Loop LoRa and  OLED
+    heltecLoop();
 
+    
+} // End loop
+
+void heltecLoop()
+{
+    // Setup Display
+    Heltec.display->clear();
+    Heltec.display->setTextAlignment(TEXT_ALIGN_LEFT);
+    Heltec.display->setFont(ArialMT_Plain_10);
+
+    // First line
+    Heltec.display->drawString(0, 0, "Water Level: " + String(waterLevelFt) + String(" ft"));
+
+    // Second line
+    Heltec.display->drawString(0, LINE_HEIGHT, "Pump: " + String(pumpOn ? "On": "Off"));
+    Heltec.display->drawString(70, LINE_HEIGHT, "Buzzer: " + String(pumpOn ? "On": "Off") );
+
+    // Third line
+    Heltec.display->drawString(0, LINE_HEIGHT * 2, 
+      "         Color: " + String(lightColor == 3 ? "Red": lightColor == 2 ? "Yellow": lightColor == 1 ? "Green": "Unknown"));
+
+    // Fourth line
+    Heltec.display->drawString(0, LINE_HEIGHT * 3, "---------- Configuration ---------");
+    
+    // Fifth line
+    Heltec.display->drawString(0, LINE_HEIGHT * 4, "Hgt: " + String(mountHeight));
+    Heltec.display->drawString(70, LINE_HEIGHT * 4, "Dpth: " + String(tankDepth) );
+
+    // Sixth line
+    Heltec.display->drawString(0, LINE_HEIGHT * 5, "Min lvl: " + String(minLevel));
+    Heltec.display->drawString(70, LINE_HEIGHT * 5, "Max lvl: " + String(maxLevel) );
+
+    // Display
+    Heltec.display->display();
+  
+    // send packet
+    LoRa.beginPacket();
+    /*
+     * LoRa.setTxPower(txPower,RFOUT_pin);
+     * txPower -- 0 ~ 20
+     * RFOUT_pin could be RF_PACONFIG_PASELECT_PABOOST or RF_PACONFIG_PASELECT_RFO
+     *   - RF_PACONFIG_PASELECT_PABOOST -- LoRa single output via PABOOST, maximum output 20dBm
+     *   - RF_PACONFIG_PASELECT_RFO     -- LoRa single output via RFO_HF / RFO_LF, maximum output 14dBm
+    */
+    LoRa.setTxPower(14,RF_PACONFIG_PASELECT_PABOOST);
+    LoRa.print("hello ");
+    LoRa.endPacket();
 }
 
 // connect to wifi – returns true if successful or false if not
