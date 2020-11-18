@@ -18,23 +18,32 @@ String getSetupPage();
 // Globals
 boolean wifiConnected = false;
 AsyncWebServer server(80);
+int runRate = 2; // times per second
 
 // RX-ed vars
-float   waterLevelFt = -99;
-boolean pumpOn = false;
-boolean buzzerOn = false;
-byte    lightColor = 0; // 0 - unknown, 1 - green, 2 - yellow, 3 - red
+struct RXData
+{
+  float   waterLevelFt = -99;
+  boolean pumpOn = false;
+  boolean buzzerOn = false;
+  byte    lightColor = 0; // 0 - unknown, 1 - green, 2 - yellow, 3 - red
+
+} rxData;
 
 // TX-ed vars
 // TX-ed :: Configuration params
-float minLevel = 2;
-float maxLevel = 3.5;
-float mountHeight = 5;
-float tankDepth = 4;
+struct ConfigData
+{
+  float minLevel = 2;
+  float maxLevel = 3.5;
+  float mountHeight = 5;
+  float tankDepth = 4;
+  
+} configData;
+boolean configUpdated = false;
 
 // TX Details
 #define BAND    868E6  //you can set band here directly,e.g. 868E6,915E6
-
 
 // Display Vars
 const int LINE_HEIGHT = 10;
@@ -118,16 +127,20 @@ void setup()
     delay(1000);
     // LORA SETUP
 
-    
+    // Deep sleep setup
+    // esp_sleep_enable_timer_wakeup(1000000 / 2);
+    // esp_deep_sleep_start(); // Runs the deep sleep routine (a system reboot happens each time)
     
 } // End setup
 
 void loop() 
-{
+{    
     // Loop LoRa and  OLED
     heltecLoop();
 
-    
+    // Sleep
+    delay(1000 / runRate);
+
 } // End loop
 
 void heltecLoop()
@@ -138,42 +151,49 @@ void heltecLoop()
     Heltec.display->setFont(ArialMT_Plain_10);
 
     // First line
-    Heltec.display->drawString(0, 0, "Water Level: " + String(waterLevelFt) + String(" ft"));
+    Heltec.display->drawString(0, 0, "Water Level: " + String(rxData.waterLevelFt) + String(" ft"));
 
     // Second line
-    Heltec.display->drawString(0, LINE_HEIGHT, "Pump: " + String(pumpOn ? "On": "Off"));
-    Heltec.display->drawString(70, LINE_HEIGHT, "Buzzer: " + String(pumpOn ? "On": "Off") );
+    Heltec.display->drawString(0, LINE_HEIGHT, "Pump: " + String(rxData.pumpOn ? "On": "Off"));
+    Heltec.display->drawString(70, LINE_HEIGHT, "Buzzer: " + String(rxData.pumpOn ? "On": "Off") );
 
     // Third line
     Heltec.display->drawString(0, LINE_HEIGHT * 2, 
-      "         Color: " + String(lightColor == 3 ? "Red": lightColor == 2 ? "Yellow": lightColor == 1 ? "Green": "Unknown"));
+      "         Color: " + String(rxData.lightColor == 3 ? "Red": rxData.lightColor == 2 ? "Yellow": rxData.lightColor == 1 ? "Green": "Unknown"));
 
     // Fourth line
     Heltec.display->drawString(0, LINE_HEIGHT * 3, "---------- Configuration ---------");
     
     // Fifth line
-    Heltec.display->drawString(0, LINE_HEIGHT * 4, "Hgt: " + String(mountHeight));
-    Heltec.display->drawString(70, LINE_HEIGHT * 4, "Dpth: " + String(tankDepth) );
+    Heltec.display->drawString(0, LINE_HEIGHT * 4, "Hgt: " + String(configData.mountHeight));
+    Heltec.display->drawString(70, LINE_HEIGHT * 4, "Dpth: " + String(configData.tankDepth) );
 
     // Sixth line
-    Heltec.display->drawString(0, LINE_HEIGHT * 5, "Min lvl: " + String(minLevel));
-    Heltec.display->drawString(70, LINE_HEIGHT * 5, "Max lvl: " + String(maxLevel) );
+    Heltec.display->drawString(0, LINE_HEIGHT * 5, "Min lvl: " + String(configData.minLevel));
+    Heltec.display->drawString(70, LINE_HEIGHT * 5, "Max lvl: " + String(configData.maxLevel) );
 
     // Display
     Heltec.display->display();
   
     // send packet
-    LoRa.beginPacket();
-    /*
-     * LoRa.setTxPower(txPower,RFOUT_pin);
-     * txPower -- 0 ~ 20
-     * RFOUT_pin could be RF_PACONFIG_PASELECT_PABOOST or RF_PACONFIG_PASELECT_RFO
-     *   - RF_PACONFIG_PASELECT_PABOOST -- LoRa single output via PABOOST, maximum output 20dBm
-     *   - RF_PACONFIG_PASELECT_RFO     -- LoRa single output via RFO_HF / RFO_LF, maximum output 14dBm
-    */
-    LoRa.setTxPower(14,RF_PACONFIG_PASELECT_PABOOST);
-    LoRa.print("hello ");
-    LoRa.endPacket();
+    if(configUpdated)
+    {
+        // Send once
+        configUpdated = false;
+        
+        Serial.println("Configuration updated, sending changes.");
+        LoRa.beginPacket();
+        /*
+         * LoRa.setTxPower(txPower,RFOUT_pin);
+         * txPower -- 0 ~ 20
+         * RFOUT_pin could be RF_PACONFIG_PASELECT_PABOOST or RF_PACONFIG_PASELECT_RFO
+         *   - RF_PACONFIG_PASELECT_PABOOST -- LoRa single output via PABOOST, maximum output 20dBm
+         *   - RF_PACONFIG_PASELECT_RFO     -- LoRa single output via RFO_HF / RFO_LF, maximum output 14dBm
+        */
+        LoRa.setTxPower(14,RF_PACONFIG_PASELECT_PABOOST);
+        LoRa.write((unsigned char*) &configData, sizeof(ConfigData));
+        LoRa.endPacket();
+    }
 }
 
 // connect to wifi – returns true if successful or false if not
@@ -270,9 +290,9 @@ String getHomePage()
         String(" \
         <div class=\"topcorner\"><a href=\"/setup\">Setup Page</a></div> \
         <h1>Well Tank Monitor Portal</h1> \
-        <label class=\'water_level\' > Water Level: " + String(waterLevelFt) + " </label> \
+        <label class=\'water_level\' > Water Level: " + String(rxData.waterLevelFt) + " </label> \
         <br> \
-        <label class=\'pump_status\' > Pump Status: " + (pumpOn ? "On": "Off") + " </label> \
+        <label class=\'pump_status\' > Pump Status: " + (rxData.pumpOn ? "On": "Off") + " </label> \
         ") 
       // END BODY
   ); // END makeHtmlPage
@@ -282,7 +302,7 @@ String addFormLine(String key, String label, float defaultValue)
 {
   return String(" \
     <label for=\"") + key + String("\">") + label + String(":</label><br> \
-    <input type=\"number\" id=\"") + key + String("\" name=\"") + key + String("\" value=\"") + String(defaultValue) + String("\"><br><br> \
+    <input type=\"number\" id=\"") + key + String("\" name=\"") + key + String("\" step=\"0.1\" value=\"") + String(defaultValue) + String("\"><br><br> \
   ");
 }
 
@@ -311,8 +331,8 @@ String getSetupPage()
           ") +
   
           // Min / Max depths
-          addFormLine("min_level", "Min Level", minLevel) + \
-          addFormLine("max_level", "Max Level", maxLevel) + \
+          addFormLine("min_level", "Min Level", configData.minLevel) + \
+          addFormLine("max_level", "Max Level", configData.maxLevel) + \
   
           // End Form 
           String(" \
@@ -331,7 +351,7 @@ String handleConfigureGet(AsyncWebServerRequest *request)
   if(request->hasParam("min_level"))
   {
       Serial.println("Min: " + String(request->getParam("min_level")->value().toFloat()));
-      minLevel = request->getParam("min_level")->value().toFloat();
+      configData.minLevel = request->getParam("min_level")->value().toFloat();
   }
   else
   {
@@ -341,27 +361,27 @@ String handleConfigureGet(AsyncWebServerRequest *request)
   if(request->hasParam("max_level"))
   {
       Serial.println("Max: " + String(request->getParam("max_level")->value().toFloat()));
-      maxLevel = request->getParam("max_level")->value().toFloat();
+      configData.maxLevel = request->getParam("max_level")->value().toFloat();
   }
   else
   {
       Serial.println("max_level does not exist!");
   }
 
-  int params = request->params();
-  for(int i=0;i<params;i++){
-    AsyncWebParameter* p = request->getParam(i);
-    if(p->isFile()){ //p->isPost() is also true
-      Serial.printf("FILE[%s]: %s, size: %u\n", p->name().c_str(), p->value().c_str(), p->size());
-    } else if(p->isPost()){
-      Serial.printf("POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
-    } else {
-      Serial.printf("GET[%s]: %s\n", p->name().c_str(), p->value().c_str());
-    }
-  }
+//  int params = request->params();
+//  for(int i=0;i<params;i++){
+//    AsyncWebParameter* p = request->getParam(i);
+//    if(p->isFile()){ //p->isPost() is also true
+//      Serial.printf("FILE[%s]: %s, size: %u\n", p->name().c_str(), p->value().c_str(), p->size());
+//    } else if(p->isPost()){
+//      Serial.printf("POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
+//    } else {
+//      Serial.printf("GET[%s]: %s\n", p->name().c_str(), p->value().c_str());
+//    }
+//  }
 
-  Serial.flush();
-
+  // Trigger update
+  configUpdated = true;
   
   // Return the success page
   return makeHtmlPage(
