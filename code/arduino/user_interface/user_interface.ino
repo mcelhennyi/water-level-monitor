@@ -42,7 +42,7 @@ struct ConfigData
 } configData;
 boolean configUpdated = false;
 
-// TX Details
+// LORA Details
 #define BAND    868E6  //you can set band here directly,e.g. 868E6,915E6
 
 // Display Vars
@@ -139,13 +139,14 @@ void loop()
 
 void heltecLoop()
 {
+    // ----- Display -----
     // Setup Display
     Heltec.display->clear();
     Heltec.display->setTextAlignment(TEXT_ALIGN_LEFT);
     Heltec.display->setFont(ArialMT_Plain_10);
 
     // First line
-    Heltec.display->drawString(0, 0, "Water Level: " + String(rxData.waterLevelFt) + String(" ft"));
+    Heltec.display->drawString(0, 0, "         Water Level: " + String(rxData.waterLevelFt) + String(" ft"));
 
     // Second line
     Heltec.display->drawString(0, LINE_HEIGHT, "Pump: " + String(rxData.pumpOn ? "On": "Off"));
@@ -168,8 +169,9 @@ void heltecLoop()
 
     // Display
     Heltec.display->display();
-  
-    // send packet
+    // ----- Display -----
+
+    // ----- SEND -----
     if(configUpdated)
     {
         // Send once
@@ -188,6 +190,39 @@ void heltecLoop()
         LoRa.write((unsigned char*) &configData, sizeof(ConfigData));
         LoRa.endPacket();
     }
+    // ----- SEND -----
+
+    // ------ Receive -------
+    int packetSize = LoRa.parsePacket();
+    if (packetSize) 
+    {
+        // received a packet      
+        char buf[1024];
+        int index = 0;
+        while (LoRa.available()) 
+        {
+            buf[index++] = (char)LoRa.read();
+        }
+
+        // Save off RX data
+        Serial.println("Got RX packet before: " + String(*((float*) &rxData)));
+        if(index == sizeof(RXData))
+        {
+            Serial.println("Got RX packet buf: " + String(*((float*) &buf)));
+            Serial.println("Got RX packet rxData: " + String(*((float*) &rxData)));
+
+            memcpy(&rxData, &buf, sizeof(RXData));
+        }
+        else
+        {
+            Serial.println("Unknown packet with length: " + String(index));
+        }
+
+        // print RSSI of packet
+        Serial.print("RSSI ");
+        Serial.println(LoRa.packetRssi());
+    }
+    // ------ Receive -------
 }
 
 // connect to wifi – returns true if successful or false if not
