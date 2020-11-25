@@ -41,7 +41,8 @@ In addition to the below hardware, a custom 3D printed enclosure will be created
 
 
 ## Current Status
-10-16-2020 - The user interface is mosty roughed out for displaying values, inputting changes, and navigating around to different pages.
+11-17-2020 - The user interface on the device is complete. The measuring device can send packets to the user device. The user device can transmit config packets.  
+11-16-2020 - The user interface webUI is mosty roughed out for displaying values, inputting changes, and navigating around to different pages.  
 
 ## Similar Projects
 These projects were either referenced, and/or used in the creation of this repo.
